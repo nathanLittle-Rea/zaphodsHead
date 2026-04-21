@@ -11,14 +11,20 @@ Halloween costume prop: animatronic second head for a Zaphod Beeblebrox (Hitchhi
 ## Running the code
 
 ```bash
-# Run the interactive bot (local Ollama)
+# Run the interactive bot (local Ollama, speaks if TTS available)
 python zaphod_local.py -i
 
 # Generate a single line from a prompt
 python zaphod_local.py "someone just complimented my costume"
 
+# Generate and speak aloud
+python zaphod_local.py --speak "someone just complimented my costume"
+
 # Pre-load the model into RAM before the party
 python zaphod_local.py --warmup
+
+# Test TTS (uses macOS `say` on dev machines, Piper on Pi)
+python tts.py "Two heads, three arms, zero problems."
 
 # Curate new examples into examples.json
 python curator.py
@@ -28,17 +34,21 @@ python zaphod_bot.py "what do you think about the meaning of life?"
 python zaphod_bot.py --one-liner "someone doubted you"
 ```
 
-No dependencies beyond Python stdlib for `zaphod_local.py` and `curator.py`. `zaphod_bot.py` requires `pip install anthropic`.
+No dependencies beyond Python stdlib for `zaphod_local.py`, `tts.py`, and `curator.py`. `zaphod_bot.py` requires `pip install anthropic`.
 
 Ollama must be running locally: `ollama serve` with `llama3.2:3b` pulled.
+
+Piper TTS: run `./setup_piper.sh` once on the Pi. On macOS, `tts.py` falls back to the built-in `say` command automatically.
 
 ## Architecture
 
 ```
 zaphod_local.py   — primary bot, offline-first
-zaphod_bot.py     — cloud fallback (Claude API via anthropic SDK)
+tts.py            — TTS wrapper (Piper → aplay/afplay; macOS `say` as dev fallback)
 curator.py        — curation UI for growing examples.json
+zaphod_bot.py     — cloud fallback (Claude API via anthropic SDK)
 examples.json     — curated one-liners, auto-injected into system prompt at runtime
+setup_piper.sh    — one-shot Piper TTS installer for the Pi
 ```
 
 **`zaphod_local.py`** is the core. It:

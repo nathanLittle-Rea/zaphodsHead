@@ -5,9 +5,11 @@ Runs fully offline on a Raspberry Pi via Ollama.
 Falls back to a pre-baked line bank if the model is too slow or fails.
 
 Usage:
-    python zaphod_local.py                         # random cached line
-    python zaphod_local.py "someone just said..."  # context-aware line
-    python zaphod_local.py --test                  # smoke-test the model
+    python zaphod_local.py                          # random cached line
+    python zaphod_local.py "someone just said..."   # context-aware line
+    python zaphod_local.py --speak "..."            # generate and speak aloud
+    python zaphod_local.py -i                       # interactive REPL (speaks if TTS available)
+    python zaphod_local.py --warmup                 # pre-load model into RAM
 """
 
 import sys
@@ -16,6 +18,11 @@ import json
 import os
 import urllib.request
 import urllib.error
+
+try:
+    import tts as _tts
+except ImportError:
+    _tts = None
 
 # ---------------------------------------------------------------------------
 # Config
@@ -189,9 +196,16 @@ def warmup():
         print(f"Warning: model didn't respond within {TIMEOUT_SEC}s. Try increasing TIMEOUT_SEC.")
 
 
+def _speak(text: str):
+    """Speak text if TTS is available, otherwise do nothing."""
+    if _tts:
+        _tts.speak(text)
+
+
 def interactive():
     """Interactive prompt loop for testing."""
-    print(f"Zaphod Beeblebrox — interactive mode  (model: {MODEL})")
+    tts_status = _tts.status() if _tts else "unavailable"
+    print(f"Zaphod Beeblebrox — interactive mode  (model: {MODEL}, tts: {tts_status})")
     print("Type a prompt and press Enter. Blank line = random cached line. Ctrl-C to quit.\n")
     warmup()
     print()
@@ -203,6 +217,7 @@ def interactive():
             break
         line, source = get_zaphod_line(context)
         print(f"Zaphod: {line}\n")
+        _speak(line)
 
 
 def main():
@@ -214,12 +229,14 @@ def main():
         interactive()
         return
 
-    context = ""
-    if len(sys.argv) > 1:
-        context = " ".join(sys.argv[1:])
+    speak = "--speak" in sys.argv
+    args = [a for a in sys.argv[1:] if a != "--speak"]
+    context = " ".join(args)
 
     line, source = get_zaphod_line(context)
     print(line)
+    if speak:
+        _speak(line)
 
 
 if __name__ == "__main__":

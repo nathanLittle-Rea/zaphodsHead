@@ -17,16 +17,18 @@ A small LLM (`llama3.2:3b`) runs on the Pi via [Ollama](https://ollama.ai). It's
 | File | Purpose |
 |---|---|
 | `zaphod_local.py` | Main bot — Ollama API, fallback line bank, CLI |
+| `tts.py` | TTS wrapper — Piper offline, macOS `say` dev fallback |
 | `curator.py` | Interactive curation tool — generate, refine, and save examples |
 | `zaphod_bot.py` | Cloud version using the Anthropic API (optional) |
 | `examples.json` | Curated one-liners injected into the system prompt at runtime |
+| `setup_piper.sh` | One-shot Piper TTS installer for the Pi |
 | `TODO.md` | Full project roadmap (hardware, voice I/O, modes) |
 
 ---
 
 ## Requirements
 
-- Python 3.10+ (stdlib only for `zaphod_local.py` and `curator.py`)
+- Python 3.10+ (stdlib only for `zaphod_local.py`, `tts.py`, and `curator.py`)
 - [Ollama](https://ollama.ai) running locally with `llama3.2:3b` pulled
 - Raspberry Pi 5 **8GB** recommended (4GB will be slow)
 
@@ -34,6 +36,12 @@ A small LLM (`llama3.2:3b`) runs on the Pi via [Ollama](https://ollama.ai). It's
 # Install Ollama and pull the model (on the Pi)
 curl -fsSL https://ollama.ai/install.sh | sh
 ollama pull llama3.2:3b
+
+# Install Piper TTS (on the Pi)
+chmod +x setup_piper.sh && ./setup_piper.sh
+
+# Install audio playback utils if not present (Pi/Linux)
+sudo apt install alsa-utils
 ```
 
 For the cloud version only:
@@ -52,12 +60,25 @@ export ANTHROPIC_API_KEY=your_key_here
 # Single line from a prompt
 python zaphod_local.py "someone just complimented my costume"
 
-# Interactive REPL
+# Generate and speak aloud (requires Piper setup)
+python zaphod_local.py --speak "someone just complimented my costume"
+
+# Interactive REPL (speaks automatically if TTS is available)
 python zaphod_local.py -i
 
 # Pre-load the model into RAM before the party (recommended)
 python zaphod_local.py --warmup
 ```
+
+### Test TTS
+
+```bash
+# Check TTS status and play a test line
+python tts.py
+python tts.py "Two heads, three arms, zero problems."
+```
+
+On a development Mac, this will use the built-in `say` command so you can test the full loop without Piper installed.
 
 ### Curate examples
 
@@ -97,7 +118,7 @@ All lines must be **first person, spoken directly to another person** — never 
 
 See [`TODO.md`](TODO.md) for the full phased plan:
 
-- **Phase 2** — Voice I/O: TTS (Piper offline / ElevenLabs cloud) + STT (Whisper)
+- **Phase 2** — Voice I/O: ~~TTS~~ Piper TTS done. STT (Whisper) next.
 - **Phase 3** — Trigger modes: ambient reaction, direct prompt, private earpiece
 - **Phase 4** — Hardware: animatronic jaw, LED eyes, battery pack
 - **Phase 5** — Asyncio orchestration loop with config file
