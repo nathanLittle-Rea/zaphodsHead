@@ -17,8 +17,9 @@ import tempfile
 # ---------------------------------------------------------------------------
 # Config — adjust paths if you install Piper elsewhere
 # ---------------------------------------------------------------------------
-PIPER_BINARY = os.path.expanduser("~/piper/piper")
-PIPER_MODEL  = os.path.expanduser("~/piper-models/en_US-lessac-medium.onnx")
+PIPER_BINARY  = os.path.expanduser("~/piper/piper")
+PIPER_MODEL   = os.path.expanduser("~/piper-models/en_US-lessac-medium.onnx")
+MACOS_VOICE   = "Daniel"          # run voice_sampler.py to audition and update this
 
 
 # ---------------------------------------------------------------------------
@@ -72,8 +73,7 @@ def _speak_macos(text: str) -> bool:
     if sys.platform != "darwin":
         return False
     try:
-        # Samantha is the closest built-in voice to a smug British affect
-        subprocess.run(["say", "-v", "Samantha", text], check=True, capture_output=True, timeout=30)
+        subprocess.run(["say", "-v", MACOS_VOICE, text], check=True, capture_output=True, timeout=30)
         return True
     except Exception:
         return False
